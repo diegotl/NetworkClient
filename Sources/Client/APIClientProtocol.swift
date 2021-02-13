@@ -13,5 +13,5 @@ public protocol APIErrorProtocol: Decodable, LocalizedError {}
 public protocol APIClientProtocol {
     func execute<T: Decodable>(apiRequest: APIRequest) -> AnyPublisher<T, Error>
     func execute<T: Decodable, E: APIErrorProtocol>(apiRequest: APIRequest, errorType: E.Type) -> AnyPublisher<T, Error>
-    func download(apiRequest: APIRequest, destination: URL) -> AnyPublisher<URL, Error>
+    func download(apiRequest: APIRequest, destination: URL, fileManager: FileManager) -> AnyPublisher<URL, Error>
 }

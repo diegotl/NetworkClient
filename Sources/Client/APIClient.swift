@@ -52,7 +52,7 @@ public class APIClient: APIClientProtocol {
             .eraseToAnyPublisher()
     }
 
-    public func download(apiRequest: APIRequest, destination: URL) -> AnyPublisher<URL, Error> {
+    public func download(apiRequest: APIRequest, destination: URL, fileManager: FileManager = .default) -> AnyPublisher<URL, Error> {
         var request = apiRequest.build()
         adapters.forEach({ request = $0.adapt(request) })
 
@@ -63,7 +63,17 @@ public class APIClient: APIClientProtocol {
                 do {
                     if let error = error { throw error }
                     let sourcePath = url?.path ?? ""
-                    try FileManager.default.moveItem(atPath: sourcePath, toPath: destination.path)
+
+                    // Deletes file if it exists
+                    if fileManager.fileExists(atPath: destination.path) {
+                        try fileManager.removeItem(atPath: destination.path)
+                    }
+
+                    // Creates directory if it doesn't exist
+                    try fileManager.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+
+                    // Move downloaded file there
+                    try fileManager.moveItem(atPath: sourcePath, toPath: destination.path)
                     promise(.success(destination))
                 }
                 catch {
