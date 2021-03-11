@@ -13,8 +13,8 @@ final class APIClientTests: XCTestCase {
         
         APIClient()
             .execute(apiRequest: apiRequest)
-            .sink { value in
-                switch value {
+            .sink { completion in
+                switch completion {
                 case .finished:
                     successExpectation.fulfill()
                 case .failure(let error):
@@ -34,8 +34,8 @@ final class APIClientTests: XCTestCase {
         
         APIClient()
             .execute(apiRequest: apiRequest, errorType: RemoteError.self)
-            .sink { value in
-                switch value {
+            .sink { completion in
+                switch completion {
                 case .finished:
                     break
                 case .failure(let error):
@@ -49,9 +49,33 @@ final class APIClientTests: XCTestCase {
         wait(for: [failureExpectation], timeout: 15.0)
     }
 
+    func testDownload() {
+        let endpoint = APIEndpoint(environment: TestEnvironment.apple, path: Path.image)
+        let apiRequest = APIRequest(endpoint: endpoint)
+        let successExpectation = expectation(description: "Success")
+
+        let localPath = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.appendingPathComponent("logo.png")
+
+        APIClient()
+            .download(apiRequest: apiRequest, destination: localPath)
+            .sink { completion in
+                switch completion {
+                case .finished:
+                    successExpectation.fulfill()
+                case .failure(let error):
+                    print(error)
+                }
+            } receiveValue: { fileURL in
+                print(fileURL)
+            }.store(in: &cancellables)
+
+        wait(for: [successExpectation], timeout: 15.0)
+    }
+
     static var allTests = [
         ("testGetSuccess", testGetSuccess),
         ("testGetMappedErrorestGetSuccess", testGetMappedError),
+        ("testDownload", testDownload)
     ]
 }
 

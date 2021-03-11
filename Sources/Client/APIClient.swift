@@ -11,7 +11,7 @@ import Combine
 public class APIClient: APIClientProtocol {
 
     let adapters: [RequestAdapter]
-    
+
     public init(adapters: [RequestAdapter] = []) {
         self.adapters = adapters
     }
@@ -51,5 +51,36 @@ public class APIClient: APIClientProtocol {
             .receive(on: RunLoop.main)
             .eraseToAnyPublisher()
     }
-    
+
+    public func download(apiRequest: APIRequest, destination: URL, fileManager: FileManager = .default) -> AnyPublisher<URL, Error> {
+        var request = apiRequest.build()
+        adapters.forEach({ request = $0.adapt(request) })
+
+        return Future { promise in
+            URLSession.shared.downloadTask(with: request) { [weak self] url, response, error in
+                self?.adapters.forEach { $0.complete(request: request, response: response, data: nil) }
+                
+                do {
+                    if let error = error { throw error }
+                    let sourcePath = url?.path ?? ""
+
+                    // Deletes file if it exists
+                    if fileManager.fileExists(atPath: destination.path) {
+                        try fileManager.removeItem(atPath: destination.path)
+                    }
+
+                    // Creates directory if it doesn't exist
+                    try fileManager.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+
+                    // Move downloaded file there
+                    try fileManager.moveItem(atPath: sourcePath, toPath: destination.path)
+                    promise(.success(destination))
+                }
+                catch {
+                    promise(.failure(error))
+                }
+            }.resume()
+        }.eraseToAnyPublisher()
+    }
+
 }
