@@ -15,7 +15,7 @@ public enum HTTPMethod {
     case post(_ paramater: Encodable? = nil)
     case put(_ paramater: Encodable? = nil)
     case patch(_ paramater: Encodable? = nil)
-    case delete
+    case delete(_ paramater: Encodable? = nil)
     case trace
     case connect
 
@@ -72,7 +72,8 @@ open class APIRequest {
 
         case .post(let parameter),
              .put(let parameter),
-             .patch(let parameter):
+             .patch(let parameter),
+             .delete(let parameter):
             if encoding == .json {
                 request.httpBody = try? parameter?.data()
             } else {
