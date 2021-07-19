@@ -32,6 +32,26 @@ public class APIClient: APIClientProtocol {
             .eraseToAnyPublisher()
     }
 
+    public func execute(apiRequest: APIRequest, accept statusCodes: [Int] = [200]) -> AnyPublisher<Empty, Error> {
+        var request = apiRequest.build()
+        adapters.forEach({ request = $0.adapt(request) })
+
+        return URLSession
+            .shared
+            .dataTaskPublisher(for: request)
+            .tryMap { [weak self] (data, response) -> Empty in
+                self?.adapters.forEach { $0.complete(request: request, response: response, data: data) }
+
+                guard let httpResponse = response as? HTTPURLResponse, statusCodes.contains(httpResponse.statusCode) else {
+                    throw URLError(.badServerResponse)
+                }
+
+                return Empty()
+            }
+            .receive(on: RunLoop.main)
+            .eraseToAnyPublisher()
+    }
+
     public func execute<T: Decodable, E: APIErrorProtocol>(apiRequest: APIRequest, errorType: E.Type) -> AnyPublisher<T, Error> {
         var request = apiRequest.build()
         adapters.forEach({ request = $0.adapt(request) })
