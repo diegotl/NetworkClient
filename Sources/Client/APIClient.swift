@@ -32,7 +32,7 @@ public class APIClient: APIClientProtocol {
             .eraseToAnyPublisher()
     }
 
-    public func execute(apiRequest: APIRequest, accept statusCodes: [Int] = [200]) -> AnyPublisher<EmptyObject, Error> {
+    public func execute(apiRequest: APIRequest, accept statusCodes: [Int]) -> AnyPublisher<EmptyObject, Error> {
         var request = apiRequest.build()
         adapters.forEach({ request = $0.adapt(request) })
 
