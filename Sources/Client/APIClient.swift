@@ -17,7 +17,7 @@ public class APIClient: APIClientProtocol {
     }
 
     public func execute<T: Decodable>(apiRequest: APIRequest) -> AnyPublisher<T, Error> {
-        var request = apiRequest.build()
+        var request = apiRequest.build(cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
         adapters.forEach({ request = $0.adapt(request) })
 
         return URLSession
@@ -33,7 +33,7 @@ public class APIClient: APIClientProtocol {
     }
 
     public func execute(apiRequest: APIRequest, accept statusCodes: [Int]) -> AnyPublisher<EmptyObject, Error> {
-        var request = apiRequest.build()
+        var request = apiRequest.build(cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
         adapters.forEach({ request = $0.adapt(request) })
 
         return URLSession
@@ -53,7 +53,7 @@ public class APIClient: APIClientProtocol {
     }
 
     public func execute<T: Decodable, E: APIErrorProtocol>(apiRequest: APIRequest, errorType: E.Type) -> AnyPublisher<T, Error> {
-        var request = apiRequest.build()
+        var request = apiRequest.build(cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
         adapters.forEach({ request = $0.adapt(request) })
 
         return URLSession
@@ -73,7 +73,7 @@ public class APIClient: APIClientProtocol {
     }
 
     public func download(apiRequest: APIRequest, destination: URL, fileManager: FileManager = .default) -> AnyPublisher<URL, Error> {
-        var request = apiRequest.build()
+        var request = apiRequest.build(cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
         adapters.forEach({ request = $0.adapt(request) })
 
         return Future { promise in
