@@ -32,6 +32,52 @@ public class APIClient: APIClientProtocol {
             .eraseToAnyPublisher()
     }
 
+    public func execute<T: Decodable>(apiRequest: APIRequest, accept statusCodes: [Int]) -> AnyPublisher<T, Error> {
+        var request = apiRequest.build(cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
+        adapters.forEach({ request = $0.adapt(request) })
+
+        return URLSession
+            .shared
+            .dataTaskPublisher(for: request)
+            .tryMap { [weak self] (data, response) in
+                self?.adapters.forEach { $0.complete(request: request, response: response, data: data) }
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw URLError(.badServerResponse)
+                }
+
+                guard statusCodes.contains(httpResponse.statusCode) else {
+                    let error = URLError(.badServerResponse, userInfo: ["response_code": httpResponse.statusCode])
+                    throw error
+                }
+                
+                return data
+            }
+            .decode(type: T.self, decoder: JSONDecoder())
+            .receive(on: RunLoop.main)
+            .eraseToAnyPublisher()
+    }
+
+    public func execute<T: Decodable, E: APIErrorProtocol>(apiRequest: APIRequest, errorType: E.Type) -> AnyPublisher<T, Error> {
+        var request = apiRequest.build(cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
+        adapters.forEach({ request = $0.adapt(request) })
+
+        return URLSession
+            .shared
+            .dataTaskPublisher(for: request)
+            .tryMap { [weak self] (data, response) in
+                self?.adapters.forEach { $0.complete(request: request, response: response, data: data) }
+
+                if let decodedObject = try? JSONDecoder().decode(T.self, from: data) {
+                    return decodedObject
+                }
+                
+                throw try JSONDecoder().decode(E.self, from: data)
+            }
+            .receive(on: RunLoop.main)
+            .eraseToAnyPublisher()
+    }
+
     public func execute(apiRequest: APIRequest, accept statusCodes: [Int]) -> AnyPublisher<EmptyObject, Error> {
         var request = apiRequest.build(cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
         adapters.forEach({ request = $0.adapt(request) })
@@ -52,26 +98,6 @@ public class APIClient: APIClientProtocol {
                 }
 
                 return EmptyObject()
-            }
-            .receive(on: RunLoop.main)
-            .eraseToAnyPublisher()
-    }
-
-    public func execute<T: Decodable, E: APIErrorProtocol>(apiRequest: APIRequest, errorType: E.Type) -> AnyPublisher<T, Error> {
-        var request = apiRequest.build(cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
-        adapters.forEach({ request = $0.adapt(request) })
-
-        return URLSession
-            .shared
-            .dataTaskPublisher(for: request)
-            .tryMap { [weak self] (data, response) in
-                self?.adapters.forEach { $0.complete(request: request, response: response, data: data) }
-
-                if let decodedObject = try? JSONDecoder().decode(T.self, from: data) {
-                    return decodedObject
-                }
-                
-                throw try JSONDecoder().decode(E.self, from: data)
             }
             .receive(on: RunLoop.main)
             .eraseToAnyPublisher()
