@@ -74,6 +74,7 @@ final class APIClientTests: XCTestCase {
         let endpoint = APIEndpoint(environment: TestEnvironment.httpbin, path: Path.empty(statusCode: 500))
         let apiRequest = APIRequest(endpoint: endpoint)
         let successExpectation = expectation(description: "Failure")
+        var responseCode: Int?
 
         APIClient()
             .execute(apiRequest: apiRequest, accept: [200])
@@ -81,7 +82,8 @@ final class APIClientTests: XCTestCase {
                 switch completion {
                 case .finished:
                     break
-                case .failure:
+                case .failure(let error):
+                    responseCode = (error as? URLError)?.userInfo["response_code"] as? Int
                     successExpectation.fulfill()
                 }
             } receiveValue: { empty in
@@ -89,6 +91,7 @@ final class APIClientTests: XCTestCase {
             }.store(in: &cancellables)
 
         wait(for: [successExpectation], timeout: 15.0)
+        XCTAssertEqual(responseCode, 500)
     }
 
     func testDownload() {

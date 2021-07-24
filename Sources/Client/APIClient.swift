@@ -42,8 +42,13 @@ public class APIClient: APIClientProtocol {
             .tryMap { [weak self] (data, response) -> EmptyObject in
                 self?.adapters.forEach { $0.complete(request: request, response: response, data: data) }
 
-                guard let httpResponse = response as? HTTPURLResponse, statusCodes.contains(httpResponse.statusCode) else {
+                guard let httpResponse = response as? HTTPURLResponse else {
                     throw URLError(.badServerResponse)
+                }
+
+                guard statusCodes.contains(httpResponse.statusCode) else {
+                    let error = URLError(.badServerResponse, userInfo: ["response_code": httpResponse.statusCode])
+                    throw error
                 }
 
                 return EmptyObject()
