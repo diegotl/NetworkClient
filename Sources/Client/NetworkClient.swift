@@ -37,13 +37,13 @@ public class NetworkClient: NetworkClientProtocol {
     // MARK: - Exposed functions
 
     public func request<T: Decodable>(urlRequest: URLRequest) -> AnyPublisher<T, Error> {
-        var request = urlRequest
-        adapters.forEach({ request = $0.adapt(request) })
+        var urlRequest = urlRequest
+        adapters.forEach({ urlRequest = $0.adapt(urlRequest) })
 
         return makeSession()
             .dataTaskPublisher(for: urlRequest)
             .tryMap { [weak self] data, response in
-                self?.adapters.forEach { $0.complete(request: request, response: response, data: data) }
+                self?.adapters.forEach { $0.complete(request: urlRequest, response: response, data: data) }
 
                 guard let httpResponse = response as? HTTPURLResponse else {
                     throw NetworkError.badContent
