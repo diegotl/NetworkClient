@@ -1,6 +1,6 @@
 import XCTest
-import APIClientTests
+import NetworkClientTests
 
 var tests = [XCTestCaseEntry]()
-tests += APIClientTests.allTests()
+tests += NetworkClientTests.allTests()
 XCTMain(tests)

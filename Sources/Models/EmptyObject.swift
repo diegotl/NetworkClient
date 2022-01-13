@@ -1,1 +1,1 @@
-public struct EmptyObject {}
+public struct EmptyResponse: Decodable {}

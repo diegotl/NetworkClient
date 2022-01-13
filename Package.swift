@@ -3,15 +3,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "APIClient",
+    name: "NetworkClient",
     platforms: [
         .macOS(.v10_15), .iOS(.v13), .tvOS(.v13), .watchOS(.v6)
     ],
     products: [
-        .library(name: "APIClientCombine", targets: ["APIClient"]),
+        .library(name: "NetworkClientCombine", targets: ["NetworkClient"]),
     ],
     targets: [
-        .target(name: "APIClient", path: "Sources"),
-        .testTarget(name: "APIClientTests", dependencies: ["APIClient"]),
+        .target(name: "NetworkClient", path: "Sources"),
+        .testTarget(name: "NetworkClientTests", dependencies: ["NetworkClient"]),
     ]
 )
