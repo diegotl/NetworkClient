@@ -8,7 +8,7 @@ public enum RequestMethod: String {
     case patch  = "PATCH"
 }
 
-protocol Endpoint {
+public protocol Endpoint {
     var method: RequestMethod { get }
     var host: String { get }
     var path: String { get }
@@ -19,10 +19,10 @@ protocol Endpoint {
     func makeRequest() throws -> URLRequest
 }
 
-extension Endpoint {
+public extension Endpoint {
 
     var host: String {
-        return NetworkClient.configuration.host
+        NetworkClient.configuration.host
     }
 
     var queryItems: [URLQueryItem] {
