@@ -1,14 +1,21 @@
 import Foundation
 import Combine
+import Logging
 
 // MARK: - Configuration
 
-final class NetworkClientConfiguration {
+public final class NetworkClientConfiguration {
     var host: String = ""
+    var logger: Logger?
+
+    public init(host: String = "", logger: Logger? = nil) {
+        self.host = host
+        self.logger = logger
+    }
 }
 
 extension NetworkClient {
-    static var configuration: NetworkClientConfiguration = .init()
+    static public var configuration: NetworkClientConfiguration = .init()
 }
 
 // MARK: - Error
@@ -37,8 +44,15 @@ public class NetworkClient: NetworkClientProtocol {
     // MARK: - Exposed functions
 
     public func request<T: Decodable>(urlRequest: URLRequest) -> AnyPublisher<T, Error> {
+        let logger: Logger? = NetworkClient.configuration.logger
+
         var urlRequest = urlRequest
         adapters.forEach({ urlRequest = $0.adapt(urlRequest) })
+
+        logger?.info("[\(urlRequest.httpMethod ?? "")] \(urlRequest.url?.absoluteString ?? "")")
+        if let body = urlRequest.httpBody, let bodyString = String(data: body, encoding: .utf8) {
+            logger?.info("\(bodyString)")
+        }
 
         return makeSession()
             .dataTaskPublisher(for: urlRequest)
@@ -48,6 +62,8 @@ public class NetworkClient: NetworkClientProtocol {
                 guard let httpResponse = response as? HTTPURLResponse else {
                     throw NetworkError.badContent
                 }
+
+                logger?.info("[\(urlRequest.httpMethod ?? "")] \(urlRequest.url?.absoluteString ?? "") -> \(httpResponse.statusCode)")
 
                 guard (200..<300).contains(httpResponse.statusCode) else {
                     if httpResponse.statusCode == 401 {

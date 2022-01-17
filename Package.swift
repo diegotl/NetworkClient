@@ -10,8 +10,13 @@ let package = Package(
     products: [
         .library(name: "NetworkClientCombine", targets: ["NetworkClient"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
+    ],
     targets: [
-        .target(name: "NetworkClient", path: "Sources"),
+        .target(name: "NetworkClient", dependencies: [
+            .product(name: "Logging", package: "swift-log")
+        ], path: "Sources"),
         .testTarget(name: "NetworkClientTests", dependencies: ["NetworkClient"]),
     ]
 )

@@ -1,5 +1,6 @@
 import XCTest
 import Combine
+import Logging
 @testable import NetworkClient
 
 enum TestEndpoints: Endpoint {
@@ -39,6 +40,11 @@ enum TestEndpoints: Endpoint {
 }
 
 final class NetworkClientTests: XCTestCase {
+
+    override class func setUp() {
+        super.setUp()
+        NetworkClient.configuration = .init(logger: Logger(label: "network.client.tests"))
+    }
 
     func testGetSuccess() throws {
         let urlRequest = try TestEndpoints.get.makeRequest()
