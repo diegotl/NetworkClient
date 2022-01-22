@@ -51,9 +51,10 @@ public class NetworkClient: NetworkClientProtocol {
         var urlRequest = urlRequest
         adapters.forEach({ urlRequest = $0.adapt(urlRequest) })
 
-        logger?.info("[\(urlRequest.httpMethod ?? "")] \(urlRequest.url?.absoluteString ?? "")")
         if let body = urlRequest.httpBody, let bodyString = String(data: body, encoding: .utf8) {
-            logger?.info("\(bodyString)")
+            logger?.info("[\(urlRequest.httpMethod ?? "")] \(urlRequest.url?.absoluteString ?? "")", metadata: ["body": .string(bodyString)])
+        } else {
+            logger?.info("[\(urlRequest.httpMethod ?? "")] \(urlRequest.url?.absoluteString ?? "")")
         }
 
         return makeSession()
@@ -65,7 +66,7 @@ public class NetworkClient: NetworkClientProtocol {
                     throw NetworkError.badContent
                 }
 
-                logger?.info("[\(urlRequest.httpMethod ?? "")] \(urlRequest.url?.absoluteString ?? "") -> \(httpResponse.statusCode)")
+                logger?.info("[\(urlRequest.httpMethod ?? "")] \(urlRequest.url?.absoluteString ?? "") -> \(httpResponse.statusCode)", metadata: ["http_status": .string("\(httpResponse.statusCode)")])
 
                 guard (200..<300).contains(httpResponse.statusCode) else {
                     if httpResponse.statusCode == 401 {
