@@ -41,6 +41,8 @@ enum TestEndpoints: Endpoint {
 
 final class NetworkClientTests: XCTestCase {
 
+    private let networkClient = NetworkClient()
+
     override class func setUp() {
         super.setUp()
         NetworkClient.configuration = .init(logger: Logger(label: "network.client.tests"))
@@ -50,7 +52,7 @@ final class NetworkClientTests: XCTestCase {
         let urlRequest = try TestEndpoints.get.makeRequest()
         let successExpectation = expectation(description: "Success")
 
-        let cancellable = NetworkClient().request(urlRequest: urlRequest).sink { completion in
+        let cancellable = networkClient.request(urlRequest: urlRequest).sink { completion in
             successExpectation.fulfill()
         } receiveValue: { (object: HttpBinResponse) in
             print(object)
@@ -64,7 +66,7 @@ final class NetworkClientTests: XCTestCase {
         let urlRequest = try TestEndpoints.weather.makeRequest()
         let failureExpectation = expectation(description: "Failure")
 
-        let cancellable = NetworkClient().request(urlRequest: urlRequest).sink { completion in
+        let cancellable = networkClient.request(urlRequest: urlRequest).sink { completion in
             switch completion {
             case .finished:
                 break
@@ -84,7 +86,7 @@ final class NetworkClientTests: XCTestCase {
         let urlRequest = try TestEndpoints.empty.makeRequest()
         let successExpectation = expectation(description: "Success")
 
-        let cancellable = NetworkClient().request(urlRequest: urlRequest).sink { completion in
+        let cancellable = networkClient.request(urlRequest: urlRequest).sink { completion in
             switch completion {
             case .finished:
                 successExpectation.fulfill()
@@ -104,7 +106,7 @@ final class NetworkClientTests: XCTestCase {
         let successExpectation = expectation(description: "Failure")
         var responseCode: Int?
 
-        let cancellable = NetworkClient().request(urlRequest: urlRequest).sink { completion in
+        let cancellable = networkClient.request(urlRequest: urlRequest).sink { completion in
             switch completion {
             case .finished:
                 break
