@@ -97,11 +97,16 @@ private extension NetworkClient {
         let logger: Logger? = NetworkClient.configuration.logger
         guard let httpMethod = urlRequest.httpMethod, let absoluteString = urlRequest.url?.absoluteString else { return }
 
+        var metadata: Logger.Metadata = .init()
         if let body = urlRequest.httpBody, let bodyString = String(data: body, encoding: .utf8) {
-            logger?.info("[\(httpMethod)] \(absoluteString)", metadata: ["body": .string(bodyString)])
-        } else {
-            logger?.info("[\(httpMethod)] \(absoluteString)")
+            metadata["body"] = .string(bodyString)
         }
+
+        if let requestHeaders = urlRequest.allHTTPHeaderFields?.metadataValue {
+            metadata["request_headers"] = .dictionary(requestHeaders)
+        }
+
+        logger?.info("[\(httpMethod)] \(absoluteString)", metadata: metadata)
     }
 
     private func log(httpResponse: HTTPURLResponse, urlRequest: URLRequest, responseBody: Data? = nil) {
