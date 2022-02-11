@@ -156,7 +156,7 @@ private extension NetworkClient {
         configuration.timeoutIntervalForResource = 120
         configuration.requestCachePolicy = NetworkClient.configuration.cachePolicy
 
-        return URLSession(configuration: configuration)
+        return URLSession(configuration: configuration, delegate: SessionDelegate(), delegateQueue: nil)
     }
 
 }
