@@ -8,7 +8,7 @@ let package = Package(
         .macOS(.v10_15), .iOS(.v13), .tvOS(.v13), .watchOS(.v6)
     ],
     products: [
-        .library(name: "NetworkClientCombine", targets: ["NetworkClient"]),
+        .library(name: "NetworkClient", targets: ["NetworkClient"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),

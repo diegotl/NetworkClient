@@ -27,6 +27,7 @@ public enum NetworkError: Error {
     case badRequest([String: Any]?, httpCode: Int)
     case invalidURL
     case unauthorized
+    case finishedWithoutValue
 }
 
 // MARK: - Network
@@ -87,6 +88,29 @@ public final class NetworkClient: NetworkClientProtocol {
             }
             .receive(on: RunLoop.main)
             .eraseToAnyPublisher()
+    }
+
+    public func request<T: Decodable>(urlRequest: URLRequest) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            var cancellable: AnyCancellable?
+            var finishedWithoutValue = true
+
+            cancellable = request(urlRequest: urlRequest).first()
+                .sink { result in
+                    switch result {
+                    case .finished:
+                        if finishedWithoutValue {
+                            continuation.resume(throwing: NetworkError.finishedWithoutValue)
+                        }
+                    case let .failure(error):
+                        continuation.resume(throwing: error)
+                    }
+                    cancellable?.cancel()
+                } receiveValue: { (value: T) in
+                    finishedWithoutValue = false
+                    continuation.resume(with: .success(value))
+                }
+        }
     }
 
 }
