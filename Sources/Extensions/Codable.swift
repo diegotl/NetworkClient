@@ -1,11 +1,3 @@
-//
-//  Codability.swift
-//  APIClient
-//
-//  Created by Diego Trevisan Lara on 18/01/18.
-//  Copyright © 2018 Diego Trevisan Lara. All rights reserved.
-//
-
 import Foundation
 
 extension Decodable {
@@ -25,15 +17,33 @@ extension Decodable {
 }
 
 extension Encodable {
-    
-    func data() throws -> Data {
+    var data: Data? {
         let encoder = JSONEncoder()
-        return try encoder.encode(self)
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        return try? encoder.encode(self)
     }
-    
-    func json() throws -> [String: Any] {
-        let json = try JSONSerialization.jsonObject(with: data(), options: [])
-        return json as! [String: Any]
+
+    var dictionary: [String: Any]? {
+        guard let data = data else { return nil }
+        return try? JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String: Any]
     }
-    
+
+    var queryString: String? {
+        guard let dictionary = dictionary else { return nil }
+        return encode(dictionary)
+    }
+
+    private func encode(_ dictionary: [String: Any]) -> String {
+        return dictionary.compactMap { (key, value) -> String? in
+            if value is [String: Any] {
+                if let dictionary = value as? [String: Any] {
+                    return encode(dictionary)
+                }
+            } else {
+                return "\(key)=\(value)"
+            }
+
+            return nil
+        }.joined(separator: "&")
+    }
 }

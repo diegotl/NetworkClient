@@ -1,21 +1,33 @@
-//
-//  Dictionary.swift
-//  APIClient
-//
-//  Created by Diego Trevisan Lara on 25/06/18.
-//  Copyright © 2018 Diego Trevisan Lara. All rights reserved.
-//
+import Foundation
+import Logging
 
-extension Dictionary {
-    
-    var queryString: String {
-        var output: String = ""
-        for (key, value) in self {
-            output = "\(output)\(key)=\(value)&"
-        }
-        
-        output = String(output.dropLast())
-        return output
+extension Dictionary where Key == String, Value == String {
+
+    var metadataValue: [String: Logger.MetadataValue]? {
+        let result: [String: Logger.MetadataValue] = reduce([String: Logger.MetadataValue](), { partialResult, pair in
+            var partialResult = partialResult
+            partialResult[pair.key] = .string(pair.value)
+            return partialResult
+        })
+
+        guard !result.isEmpty else { return nil }
+        return result
     }
-    
+
+}
+
+extension Dictionary where Key == AnyHashable, Value == Any {
+
+    var metadataValue: [String: Logger.MetadataValue]? {
+        let result: [String: Logger.MetadataValue] = reduce([String: Logger.MetadataValue]()) { partialResult, pair in
+            var partialResult = partialResult
+            guard let key = pair.key as? String, let value = pair.value as? String else { return partialResult }
+            partialResult[key] = .string(value)
+            return partialResult
+        }
+
+        guard !result.isEmpty else { return nil }
+        return result
+    }
+
 }

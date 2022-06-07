@@ -3,15 +3,20 @@
 import PackageDescription
 
 let package = Package(
-    name: "APIClient",
+    name: "NetworkClient",
     platforms: [
         .macOS(.v10_15), .iOS(.v13), .tvOS(.v13), .watchOS(.v6)
     ],
     products: [
-        .library(name: "APIClientCombine", targets: ["APIClient"]),
+        .library(name: "NetworkClientCombine", targets: ["NetworkClient"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
     ],
     targets: [
-        .target(name: "APIClient", path: "Sources"),
-        .testTarget(name: "APIClientTests", dependencies: ["APIClient"]),
+        .target(name: "NetworkClient", dependencies: [
+            .product(name: "Logging", package: "swift-log")
+        ], path: "Sources"),
+        .testTarget(name: "NetworkClientTests", dependencies: ["NetworkClient"]),
     ]
 )
