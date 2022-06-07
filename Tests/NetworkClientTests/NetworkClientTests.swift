@@ -62,6 +62,12 @@ final class NetworkClientTests: XCTestCase {
         cancellable.cancel()
     }
 
+    func testGetSuccessAsync() async throws {
+        let urlRequest = try TestEndpoints.get.makeRequest()
+        let response: HttpBinResponse = try await networkClient.request(urlRequest: urlRequest)
+        XCTAssertNotNil(response)
+    }
+
     func testGetMappedError() throws {
         let urlRequest = try TestEndpoints.weather.makeRequest()
         let failureExpectation = expectation(description: "Failure")
@@ -82,7 +88,17 @@ final class NetworkClientTests: XCTestCase {
         cancellable.cancel()
     }
 
-    func testGetEmptyReponseSuccess() throws {
+    func testGetMappedErrorAsync() async throws {
+        let urlRequest = try TestEndpoints.weather.makeRequest()
+        do {
+            let _: HttpBinResponse = try await networkClient.request(urlRequest: urlRequest)
+            XCTFail("Call cannot succeed")
+        } catch {
+            XCTAssertNoThrow(error)
+        }
+    }
+
+    func testGetEmptyResponseSuccess() throws {
         let urlRequest = try TestEndpoints.empty.makeRequest()
         let successExpectation = expectation(description: "Success")
 
@@ -101,7 +117,13 @@ final class NetworkClientTests: XCTestCase {
         cancellable.cancel()
     }
 
-    func testGetEmptyReponseFailure() throws {
+    func testGetEmptyResponseSuccessAsync() async throws {
+        let urlRequest = try TestEndpoints.empty.makeRequest()
+        let emptyResponse: EmptyResponse = try await networkClient.request(urlRequest: urlRequest)
+        XCTAssertNotNil(emptyResponse)
+    }
+
+    func testGetEmptyResponseFailure() throws {
         let urlRequest = try TestEndpoints.error500.makeRequest()
         let successExpectation = expectation(description: "Failure")
         var responseCode: Int?
@@ -132,11 +154,34 @@ final class NetworkClientTests: XCTestCase {
         XCTAssertEqual(responseCode, 500)
     }
 
+    func testGetEmptyResponseFailureAsync() async throws {
+        let urlRequest = try TestEndpoints.error500.makeRequest()
+        do {
+            let _: EmptyResponse = try await networkClient.request(urlRequest: urlRequest)
+            XCTFail("Call cannot succeed")
+        } catch {
+            if let error = error as? NetworkError {
+                switch error {
+                case .badRequest(_, let httpCode):
+                    XCTAssertEqual(httpCode, 500)
+                default:
+                    XCTFail("Expected error to be NetworkError.badRequest")
+                }
+            } else {
+                XCTFail("Expected error to be NetworkError")
+            }
+        }
+    }
+
     static var allTests = [
         ("testGetSuccess", testGetSuccess),
-        ("testGetMappedErrorestGetSuccess", testGetMappedError),
-        ("testGetEmptyReponseSuccess", testGetEmptyReponseSuccess),
-        ("testGetEmptyReponseFailure", testGetEmptyReponseFailure)
+        ("testGetSuccessAsync", testGetSuccessAsync),
+        ("testGetMappedError", testGetMappedError),
+        ("testGetMappedErrorAsync", testGetMappedErrorAsync),
+        ("testGetEmptyResponseSuccess", testGetEmptyResponseSuccess),
+        ("testGetEmptyResponseSuccessAsync", testGetEmptyResponseSuccessAsync),
+        ("testGetEmptyResponseFailure", testGetEmptyResponseFailure),
+        ("testGetEmptyResponseFailureAsync", testGetEmptyResponseFailureAsync)
     ]
 }
 
