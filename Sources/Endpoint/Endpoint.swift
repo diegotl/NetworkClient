@@ -21,10 +21,6 @@ public protocol Endpoint {
 
 public extension Endpoint {
 
-    var host: String {
-        NetworkClient.configuration.host
-    }
-
     var queryItems: [URLQueryItem] {
         []
     }

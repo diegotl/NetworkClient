@@ -5,14 +5,12 @@ import Logging
 // MARK: - Configuration
 
 public final class NetworkClientConfiguration {
-    let host: String
     let logger: Logger?
-    let cachePolicy: NSURLRequest.CachePolicy
+    let session: URLSession?
 
-    public init(host: String = "", logger: Logger? = nil, cachePolicy: NSURLRequest.CachePolicy = .reloadIgnoringLocalAndRemoteCacheData) {
-        self.host = host
+    public init(logger: Logger? = nil, session: URLSession? = nil) {
         self.logger = logger
-        self.cachePolicy = cachePolicy
+        self.session = session
     }
 }
 
@@ -178,14 +176,7 @@ private extension NetworkClient {
 }
 
 private extension NetworkClient {
-
     func makeSession() -> URLSession {
-        let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 60
-        configuration.timeoutIntervalForResource = 120
-        configuration.requestCachePolicy = NetworkClient.configuration.cachePolicy
-
-        return URLSession(configuration: configuration, delegate: SessionDelegate(), delegateQueue: nil)
+        NetworkClient.configuration.session ?? .shared
     }
-
 }
