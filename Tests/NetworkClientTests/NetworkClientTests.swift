@@ -135,8 +135,8 @@ final class NetworkClientTests: XCTestCase {
             case .failure(let error):
                 if let error = error as? NetworkError {
                     switch error {
-                    case .badRequest(_, let httpCode):
-                        responseCode = httpCode
+                    case .badRequest(let logData):
+                        responseCode = logData.httpResponse?.statusCode
                     default:
                         break
                     }
@@ -162,8 +162,8 @@ final class NetworkClientTests: XCTestCase {
         } catch {
             if let error = error as? NetworkError {
                 switch error {
-                case .badRequest(_, let httpCode):
-                    XCTAssertEqual(httpCode, 500)
+                case .badRequest(let logData):
+                    XCTAssertEqual(logData.httpResponse?.statusCode, 500)
                 default:
                     XCTFail("Expected error to be NetworkError.badRequest")
                 }
