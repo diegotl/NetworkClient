@@ -41,11 +41,12 @@ public final class NetworkClient: NetworkClientProtocol {
                 self?.adapters.forEach { $0.complete(request: urlRequest, response: response, data: data) }
 
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    throw NetworkError.badContent(.init(urlRequest: urlRequest, responseBody: data))
+                    throw NetworkError.badContent(.init(urlRequest: urlRequest, responseBody: data, logResponse: true))
                 }
 
-                let logData = LogData(urlRequest: urlRequest, httpResponse: httpResponse, responseBody: data)
                 guard (100..<400).contains(httpResponse.statusCode) else {
+                    let logData = LogData(urlRequest: urlRequest, httpResponse: httpResponse, responseBody: data, logResponse: true)
+
                     if httpResponse.statusCode == 401 {
                         throw NetworkError.unauthorized(logData)
                     } else {
@@ -53,6 +54,7 @@ public final class NetworkClient: NetworkClientProtocol {
                     }
                 }
 
+                let logData = LogData(urlRequest: urlRequest, httpResponse: httpResponse, responseBody: data)
                 logger?.info("\(logData.message)", metadata: logData.metadata)
 
                 // If expecting an empty response, force it to be "{}" so that JSONDecoder

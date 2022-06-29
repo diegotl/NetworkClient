@@ -2,6 +2,10 @@ import Foundation
 import Logging
 
 public final class LogData {
+    // MARK: - Private variables
+    private let logResponse: Bool
+
+    // MARK: - Public variables
     public let urlRequest: URLRequest
     public let httpResponse: HTTPURLResponse?
     public let responseBody: Data?
@@ -48,17 +52,18 @@ public final class LogData {
             metadata["response_code"] = .string("\(responseCode)")
         }
 
-        if let responseBody = responseBody, let bodyString = String(data: responseBody, encoding: .utf8) {
+        if logResponse, let responseBody = responseBody, let bodyString = String(data: responseBody, encoding: .utf8) {
             metadata["response_body"] = .string(bodyString)
         }
 
         return metadata
     }
 
-    init(urlRequest: URLRequest, httpResponse: HTTPURLResponse? = nil, responseBody: Data? = nil) {
+    init(urlRequest: URLRequest, httpResponse: HTTPURLResponse? = nil, responseBody: Data? = nil, logResponse: Bool = false) {
         self.httpResponse = httpResponse
         self.urlRequest = urlRequest
         self.responseBody = responseBody
+        self.logResponse = logResponse
     }
 
 }
