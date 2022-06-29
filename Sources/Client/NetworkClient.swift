@@ -46,6 +46,7 @@ public final class NetworkClient: NetworkClientProtocol {
 
                 guard (100..<400).contains(httpResponse.statusCode) else {
                     let logData = LogData(urlRequest: urlRequest, httpResponse: httpResponse, responseBody: data, logResponse: true)
+                    logger?.error("\(logData.message)", metadata: logData.metadata)
 
                     if httpResponse.statusCode == 401 {
                         throw NetworkError.unauthorized(logData)
@@ -66,9 +67,6 @@ public final class NetworkClient: NetworkClientProtocol {
                 }
             }
             .decode(type: T.self, decoder: decoder)
-            .mapError { error -> Error in
-                return error
-            }
             .receive(on: RunLoop.main)
             .eraseToAnyPublisher()
     }
