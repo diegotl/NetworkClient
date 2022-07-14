@@ -8,10 +8,11 @@ enum TestEndpoints: Endpoint {
     case weather
     case empty
     case error500
+    case download
 
     var method: RequestMethod {
         switch self {
-        case .get, .weather, .empty, .error500: return .get
+        case .get, .weather, .empty, .error500, .download: return .get
         }
     }
 
@@ -21,6 +22,8 @@ enum TestEndpoints: Endpoint {
             return "httpbin.org"
         case .weather:
             return "api.weather.com"
+        case .download:
+            return "upload.wikimedia.org"
         }
         
     }
@@ -35,6 +38,8 @@ enum TestEndpoints: Endpoint {
             return "/status/200"
         case .error500:
             return "/status/500"
+        case .download:
+            return "/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/195px-Apple_logo_black.svg.png"
         }
     }
 }
@@ -173,6 +178,18 @@ final class NetworkClientTests: XCTestCase {
         }
     }
 
+    func testDownloadSuccessAsync() async throws {
+        let urlRequest = try TestEndpoints.download.makeRequest()
+        let destination = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("logo.png")
+        do {
+            let url = try await networkClient.download(urlRequest: urlRequest, destination: destination, fileManager: .default)
+            XCTAssertNotNil(url)
+            try FileManager.default.removeItem(at: url)
+        } catch {
+            XCTFail("Failure not expected")
+        }
+    }
+
     static var allTests = [
         ("testGetSuccess", testGetSuccess),
         ("testGetSuccessAsync", testGetSuccessAsync),
@@ -181,7 +198,8 @@ final class NetworkClientTests: XCTestCase {
         ("testGetEmptyResponseSuccess", testGetEmptyResponseSuccess),
         ("testGetEmptyResponseSuccessAsync", testGetEmptyResponseSuccessAsync),
         ("testGetEmptyResponseFailure", testGetEmptyResponseFailure),
-        ("testGetEmptyResponseFailureAsync", testGetEmptyResponseFailureAsync)
+        ("testGetEmptyResponseFailureAsync", testGetEmptyResponseFailureAsync),
+        ("testDownloadSuccessAsync", testDownloadSuccessAsync)
     ]
 }
 

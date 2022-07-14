@@ -7,6 +7,9 @@ import Logging
 public protocol NetworkClientProtocol {
     func request<T: Decodable>(urlRequest: URLRequest) -> AnyPublisher<T, Error>
     func request<T: Decodable>(urlRequest: URLRequest) async throws -> T
+
+    func download(urlRequest: URLRequest, destination: URL, fileManager: FileManager) -> AnyPublisher<URL, Error>
+    func download(urlRequest: URLRequest, destination: URL, fileManager: FileManager) async throws -> URL
 }
 
 // MARK: - NetworkClient
@@ -88,6 +91,56 @@ public final class NetworkClient: NetworkClientProtocol {
                     }
                     cancellable?.cancel()
                 } receiveValue: { (value: T) in
+                    finishedWithoutValue = false
+                    continuation.resume(with: .success(value))
+                }
+        }
+    }
+
+    public func download(urlRequest: URLRequest, destination: URL, fileManager: FileManager) -> AnyPublisher<URL, Error> {
+        let logger: Logger? = NetworkClient.configuration.logger
+
+        var urlRequest = urlRequest
+        adapters.forEach({ urlRequest = $0.adapt(urlRequest) })
+
+        let logData = LogData(urlRequest: urlRequest)
+        logger?.info("\(logData.message)", metadata: logData.metadata)
+
+        return Future { [weak self] promise in
+            self?.makeSession()
+                .downloadTask(with: urlRequest) { [weak self] url, response, error in
+                    self?.adapters.forEach { $0.complete(request: urlRequest, response: response, data: nil) }
+
+                    do {
+                        if let error = error { throw error }
+                        let sourcePath = url?.path ?? ""
+                        try fileManager.moveItem(atPath: sourcePath, toPath: destination.path)
+                        promise(.success(destination))
+                    }
+                    catch {
+                        promise(.failure(error))
+                    }
+            }.resume()
+        }.eraseToAnyPublisher()
+    }
+
+    public func download(urlRequest: URLRequest, destination: URL, fileManager: FileManager) async throws -> URL {
+        try await withCheckedThrowingContinuation { continuation in
+            var cancellable: AnyCancellable?
+            var finishedWithoutValue = true
+
+            cancellable = download(urlRequest: urlRequest, destination: destination, fileManager: fileManager).first()
+                .sink { result in
+                    switch result {
+                    case .finished:
+                        if finishedWithoutValue {
+                            continuation.resume(throwing: NetworkError.finishedWithoutValue(.init(urlRequest: urlRequest)))
+                        }
+                    case let .failure(error):
+                        continuation.resume(throwing: error)
+                    }
+                    cancellable?.cancel()
+                } receiveValue: { (value: URL) in
                     finishedWithoutValue = false
                     continuation.resume(with: .success(value))
                 }
